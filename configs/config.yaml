@@ -1,0 +1,72 @@
+# ============================================================
+#  Self-Healing RAG — Global Configuration
+# ============================================================
+
+app:
+  name: "Self-Healing RAG"
+  version: "0.1.0"
+  debug: false
+
+# ── Ingestion ────────────────────────────────────────────────
+ingestion:
+  chunk_size: 512 # tokens / characters per chunk
+  chunk_overlap: 64 # overlap between consecutive chunks
+  chunking_strategy: "recursive" # recursive | semantic
+  min_chunk_length: 50 # drop chunks shorter than this
+  supported_extensions: [".pdf", ".txt", ".md", ".html"]
+
+# ── Embedding ────────────────────────────────────────────────
+embedding:
+  provider: "openai" # openai | huggingface
+  openai_model: "text-embedding-3-small"
+  hf_model: "BAAI/bge-small-en-v1.5"
+  dimension: 1536 # 1536 for text-embedding-3-small
+  batch_size: 32
+
+# ── Vector Store ─────────────────────────────────────────────
+vector_store:
+  provider: "chroma" # chroma | faiss
+  persist_directory: "data/chroma_db"
+  collection_name: "self_healing_rag"
+  distance_metric: "cosine"
+
+# ── Retrieval ────────────────────────────────────────────────
+retrieval:
+  k: 10 # number of candidates to retrieve
+  final_k: 4 # top-k after re-ranking
+  alpha: 0.7 # weight for dense vs BM25 (hybrid)
+  score_threshold: 0.3 # minimum similarity score to include
+  use_reranker: true
+  reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  use_hyde: false # HyDE (hypothetical doc embedding)
+  use_multi_query: false
+
+# ── Generation ───────────────────────────────────────────────
+generation:
+  provider: "openai" # openai | anthropic | ollama
+  openai_model: "gpt-4o-mini"
+  anthropic_model: "claude-3-5-haiku-20241022"
+  ollama_model: "llama3.1:8b"
+  ollama_base_url: "http://localhost:11434"
+  temperature: 0.2
+  max_tokens: 1024
+  stream: false
+  token_budget: 3000 # max context tokens fed to LLM
+
+# ── Evaluation thresholds (Phase 2) ─────────────────────────
+evaluation:
+  faithfulness_threshold: 0.75
+  relevance_threshold: 0.70
+  grounding_threshold: 0.65
+  max_heal_rounds: 3
+
+# ── Database ─────────────────────────────────────────────────
+database:
+  url: "sqlite+aiosqlite:///data/self_healing_rag.db"
+
+# ── API ──────────────────────────────────────────────────────
+api:
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins: ["*"]
+  api_key_header: "X-API-Key"

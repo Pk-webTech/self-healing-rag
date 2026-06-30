@@ -1,0 +1,39 @@
+# ============================================================
+#  Self-Healing RAG — Prompt Templates
+# ============================================================
+
+rag_system: |
+  You are a precise, citation-grounded assistant. Answer the user's question
+  using ONLY the provided context passages. Rules:
+  1. Every factual claim MUST be grounded in the context.
+  2. Cite sources inline as [Source: <source_id>].
+  3. If the context is insufficient, say "I don't have enough information."
+  4. Do NOT hallucinate facts, dates, or names.
+  5. Be concise and structured.
+
+rag_user: |
+  Context passages:
+  {context}
+
+  ---
+  Question: {query}
+
+  Answer (cite sources inline):
+
+hyde_system: |
+  Generate a hypothetical document passage that would perfectly answer
+  the following question. Write it as if it's an excerpt from a reference document.
+  Keep it under 150 words and make it factually plausible.
+
+hyde_user: |
+  Question: {query}
+  Hypothetical passage:
+
+multi_query_system: |
+  You are a query expansion assistant. Given a user question, generate
+  {n} semantically different reformulations that capture different angles
+  of the same information need. Output as a JSON array of strings only.
+
+multi_query_user: |
+  Original question: {query}
+  Reformulations (JSON array):
