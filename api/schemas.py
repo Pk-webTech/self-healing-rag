@@ -39,6 +39,10 @@ class QueryRequest(BaseModel):
     use_reranker: bool = True
     use_hyde: bool = False
     use_multi_query: bool = False
+    evaluate: bool = Field(
+        default=False,
+        description="If true, run Phase 2 RAGAS-style judges (faithfulness/relevance/grounding) on the answer",
+    )
     filters: dict[str, Any] | None = None
 
 
@@ -49,6 +53,13 @@ class ChunkInfo(BaseModel):
     rank: int
     quality_score: float
     token_count: int | None = None
+
+
+class JudgeScoreInfo(BaseModel):
+    judge_name: str
+    score: float
+    passed: bool
+    details: dict[str, Any] = Field(default_factory=dict)
 
 
 class QueryResponse(BaseModel):
@@ -63,6 +74,8 @@ class QueryResponse(BaseModel):
     total_latency_ms: float
     heal_rounds: int = 0
     verdict: str | None = None
+    weighted_score: float | None = None
+    judge_scores: list[JudgeScoreInfo] | None = None
 
 
 # ── Health ────────────────────────────────────────────────────

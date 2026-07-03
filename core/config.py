@@ -96,6 +96,14 @@ class Settings(BaseSettings):
     def evaluation_cfg(self) -> dict:
         return self.yaml["evaluation"]
 
+    @property
+    def adaptation_cfg(self) -> dict:
+        return self.yaml["adaptation"]
+
+    @property
+    def observability_cfg(self) -> dict:
+        return self.yaml["observability"]
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

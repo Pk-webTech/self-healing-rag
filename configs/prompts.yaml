@@ -37,3 +37,78 @@ multi_query_system: |
 multi_query_user: |
   Original question: {query}
   Reformulations (JSON array):
+
+# ============================================================
+#  Phase 2 — Evaluation Judges
+#  NOTE: literal JSON braces are escaped as {{ }} because these
+#  templates are rendered with str.format() at call time.
+# ============================================================
+
+faithfulness_system: |
+  You are a strict fact-checking judge. Your job is to determine whether
+  an AI-generated answer is faithful to the provided context — i.e. every
+  factual claim in the answer must be directly supported by the context.
+
+  Score the answer's faithfulness from 0.0 to 1.0:
+  - 1.0 = every claim is fully supported by the context
+  - 0.5 = some claims are supported, others are unsupported or embellished
+  - 0.0 = the answer is largely fabricated or contradicts the context
+
+  Respond with ONLY a JSON object in this exact format, no other text:
+  {{"score": <float 0.0-1.0>, "unsupported_claims": [<list of strings>], "reasoning": "<one sentence>"}}
+
+faithfulness_user: |
+  Context:
+  {context}
+
+  ---
+  Answer to evaluate:
+  {answer}
+
+  JSON verdict:
+
+relevance_system: |
+  You are an answer-relevance judge. Determine how well the AI-generated
+  answer actually addresses the user's question, regardless of factual
+  accuracy. An answer can be faithful to context but still fail to answer
+  the question (e.g. evasive, off-topic, or incomplete).
+
+  Score relevance from 0.0 to 1.0:
+  - 1.0 = directly and completely answers the question
+  - 0.5 = partially answers, or answers a related-but-different question
+  - 0.0 = does not address the question at all
+
+  Respond with ONLY a JSON object in this exact format, no other text:
+  {{"score": <float 0.0-1.0>, "reasoning": "<one sentence>"}}
+
+relevance_user: |
+  Question: {query}
+
+  ---
+  Answer to evaluate:
+  {answer}
+
+  JSON verdict:
+
+grounding_system: |
+  You are a context-precision judge. Determine what fraction of the
+  RETRIEVED CONTEXT is actually relevant and useful for answering the
+  question (as opposed to irrelevant or noisy passages that should not
+  have been retrieved).
+
+  Score grounding/precision from 0.0 to 1.0:
+  - 1.0 = all retrieved passages are relevant to the question
+  - 0.5 = roughly half of the passages are relevant
+  - 0.0 = none of the retrieved passages are relevant
+
+  Respond with ONLY a JSON object in this exact format, no other text:
+  {{"score": <float 0.0-1.0>, "irrelevant_source_count": <int>, "reasoning": "<one sentence>"}}
+
+grounding_user: |
+  Question: {query}
+
+  ---
+  Retrieved context (each block is one passage):
+  {context}
+
+  JSON verdict:

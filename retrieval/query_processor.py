@@ -10,47 +10,10 @@ from __future__ import annotations
 import json
 
 from core.config import get_settings
+from core.llm_client import call_llm
 from core.logger import logger
 
 settings = get_settings()
-
-
-def _call_llm(system: str, user: str, temperature: float = 0.5) -> str:
-    """Minimal LLM call for query expansion (uses generation provider)."""
-    provider = settings.generation_provider
-    if provider == "openai":
-        from openai import OpenAI
-        client = OpenAI(api_key=settings.openai_api_key)
-        resp = client.chat.completions.create(
-            model=settings.generation_cfg["openai_model"],
-            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
-            temperature=temperature,
-            max_tokens=300,
-        )
-        return resp.choices[0].message.content.strip()
-    if provider == "anthropic":
-        import anthropic
-        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-        msg = client.messages.create(
-            model=settings.generation_cfg["anthropic_model"],
-            max_tokens=300,
-            system=system,
-            messages=[{"role": "user", "content": user}],
-        )
-        return msg.content[0].text.strip()
-    if provider == "ollama":
-        import requests
-        payload = {
-            "model": settings.ollama_model,
-            "prompt": f"{system}\n\n{user}",
-            "stream": False,
-            "options": {"temperature": temperature, "num_predict": 300},
-        }
-        resp = requests.post(
-            f"{settings.ollama_base_url}/api/generate", json=payload, timeout=60
-        )
-        return resp.json().get("response", "").strip()
-    raise ValueError(f"Unknown provider: {provider}")
 
 
 class QueryProcessor:
@@ -92,9 +55,11 @@ class QueryProcessor:
         """HyDE: embed a hypothetical document instead of the raw query."""
         prompts = settings.prompts
         try:
-            hypo = _call_llm(
+            hypo = call_llm(
                 system=prompts["hyde_system"],
                 user=prompts["hyde_user"].format(query=query),
+                temperature=0.5,
+                max_tokens=300,
             )
             logger.debug(f"HyDE passage: {hypo[:80]}…")
             return hypo
@@ -106,10 +71,11 @@ class QueryProcessor:
         """Generate N rephrasings of the query."""
         prompts = settings.prompts
         try:
-            raw = _call_llm(
+            raw = call_llm(
                 system=prompts["multi_query_system"].format(n=self.n_multi_query),
                 user=prompts["multi_query_user"].format(query=query),
                 temperature=0.6,
+                max_tokens=300,
             )
             # strip markdown code fences if present
             raw = raw.strip().lstrip("```json").lstrip("```").rstrip("```").strip()

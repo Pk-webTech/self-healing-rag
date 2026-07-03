@@ -64,9 +64,51 @@ evaluation:
 database:
   url: "sqlite+aiosqlite:///data/self_healing_rag.db"
 
+# ── Adaptation (Phase 4) ─────────────────────────────────────
+adaptation:
+  # Quality tracker
+  ewm_alpha: 0.3 # exponential weight for rolling quality (0=slow, 1=instant)
+  drop_threshold: 0.25 # quality_score below this → drop chunk from store
+  quarantine_threshold: 0.40 # quality_score below this → flag for review but keep
+
+  # Chunk evolver
+  max_failure_count: 5 # drop chunk after this many failures regardless of score
+  evolver_batch_size: 50 # max chunks inspected per evolver run
+
+  # Retrieval tuner
+  k_candidates: [6, 8, 10, 12, 15] # k values to try
+  alpha_candidates: [0.5, 0.6, 0.7, 0.8, 0.9] # alpha (dense weight) values to try
+  tuner_min_samples: 20 # minimum QueryLog rows needed before tuning
+  tuner_lookback: 200 # number of most-recent logs to score on
+
+  # Prompt optimizer
+  prompt_optimizer_n_examples: 3 # few-shot examples to prepend
+  prompt_optimizer_min_score: 0.85 # minimum weighted_score to qualify as a good example
+
 # ── API ──────────────────────────────────────────────────────
 api:
   host: "0.0.0.0"
   port: 8000
   cors_origins: ["*"]
   api_key_header: "X-API-Key"
+
+# ── Observability (Phase 5) ───────────────────────────────────
+observability:
+  # Metrics
+  metrics_enabled: true
+  metrics_path: "/metrics" # Prometheus scrape endpoint
+
+  # Tracer
+  tracer_enabled: true
+  trace_log_path: "data/logs/traces.jsonl"
+  trace_max_file_mb: 50 # rotate when file exceeds this size
+
+  # Alerting
+  alerting_enabled: true
+  alert_score_drop_threshold: 0.15 # alert if avg weighted_score drops by this much
+  alert_heal_rate_threshold: 0.5 # alert if >50% of queries need healing
+  alert_latency_p95_ms: 5000 # alert if p95 latency exceeds this
+  alert_window_queries: 50 # rolling window of queries to evaluate alerts on
+  alert_backend: "log" # "log" | "webhook" | "slack"
+  alert_webhook_url: "" # only used when alert_backend = "webhook"
+  alert_slack_webhook_url: "" # only used when alert_backend = "slack"
