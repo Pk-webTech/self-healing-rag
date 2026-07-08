@@ -94,19 +94,6 @@ self-healing-rag/
 ├── Makefile
 └── pyproject.toml
 ```
-
----
-
-## Phases
-
-| Phase                 | Scope                                | Key Components                                                        |
-| --------------------- | ------------------------------------ | --------------------------------------------------------------------- |
-| **1 — Foundation**    | Ingest → Retrieve → Generate → API   | ChromaDB, BM25+Dense hybrid, CrossEncoder, FastAPI                    |
-| **2 — Evaluation**    | LLM-as-judge hallucination detection | FaithfulnessJudge, RelevanceJudge, GroundingJudge, Verdict aggregator |
-| **3 — Self-Healing**  | Autonomous failure correction        | Dispatcher, 4 healing actions, SQLite feedback log                    |
-| **4 — Adaptation**    | Continuous self-improvement          | EWM quality tracker, ChunkEvolver, RetrievalTuner, PromptOptimizer    |
-| **5 — Observability** | Full production telemetry            | Prometheus, JSONL traces, threshold alerting, REST dashboard          |
-
 ---
 
 ## Quick Start
